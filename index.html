@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas Cudów Świata — Civilization VI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b2430;
+    --ink-2:#25313f;
+    --paper:#f3ead9;
+    --paper-dim:#e6d9bf;
+    --paper-line:#d8c7a3;
+    --gold:#b8863b;
+    --gold-soft:#d8b26c;
+    --stamp-red:#a13d2b;
+    --route:#3c5a68;
+    --text-dark:#241c12;
+    --text-muted:#6b5f4d;
+    --text-on-ink:#f3ead9;
+    --text-on-ink-muted:#b9c2ca;
+    --radius:14px;
+    --shadow:0 6px 18px rgba(27,36,48,.18);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text-dark);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Fraunces',serif; margin:0;}
+  .mono{font-family:'Space Mono',monospace;}
+
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  :focus-visible{
+    outline:3px solid var(--route);
+    outline-offset:2px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    background:
+      radial-gradient(1200px 500px at 15% -10%, rgba(184,134,59,.18), transparent 60%),
+      var(--ink);
+    color:var(--text-on-ink);
+    padding:56px 24px 40px;
+    position:relative;
+    overflow:hidden;
+    border-bottom:1px solid rgba(184,134,59,.4);
+  }
+  header::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(243,234,217,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(243,234,217,.035) 1px, transparent 1px);
+    background-size:42px 42px;
+    pointer-events:none;
+  }
+  .header-inner{
+    max-width:1080px;
+    margin:0 auto;
+    position:relative;
+  }
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+    border:1px solid rgba(216,178,108,.45);
+    padding:5px 12px;
+    border-radius:999px;
+    margin-bottom:20px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--stamp-red);}
+  h1{
+    font-size:clamp(2.2rem, 5vw, 3.4rem);
+    font-weight:700;
+    line-height:1.05;
+    letter-spacing:-.01em;
+    max-width:14ch;
+  }
+  .subtitle{
+    margin-top:14px;
+    font-size:1.05rem;
+    color:var(--text-on-ink-muted);
+    max-width:52ch;
+    line-height:1.55;
+  }
+
+  /* Progress ledger */
+  .progress-block{
+    margin-top:36px;
+    max-width:520px;
+  }
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:10px;
+    font-family:'Space Mono',monospace;
+    font-size:13px;
+    color:var(--text-on-ink-muted);
+    letter-spacing:.04em;
+  }
+  .progress-row strong{
+    color:var(--text-on-ink);
+    font-size:15px;
+  }
+  .route{
+    position:relative;
+    height:10px;
+    border-radius:999px;
+    background:repeating-linear-gradient(
+      90deg,
+      rgba(243,234,217,.16) 0 6px,
+      transparent 6px 12px
+    );
+  }
+  .route-fill{
+    position:absolute; inset:0 auto 0 0;
+    width:0%;
+    border-radius:999px;
+    background:linear-gradient(90deg, var(--gold) 0%, var(--gold-soft) 100%);
+    box-shadow:0 0 12px rgba(216,178,108,.55);
+    transition:width .5s cubic-bezier(.4,0,.2,1);
+  }
+  .route-marker{
+    position:absolute;
+    top:50%; left:0%;
+    transform:translate(-50%,-50%);
+    width:18px; height:18px;
+    transition:left .5s cubic-bezier(.4,0,.2,1);
+  }
+  .route-marker svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));}
+
+  /* ---------- Controls ---------- */
+  .controls-wrap{
+    background:var(--paper);
+    border-bottom:1px solid var(--paper-line);
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  .controls{
+    max-width:1080px;
+    margin:0 auto;
+    padding:18px 24px;
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .search-field{
+    position:relative;
+    flex:1 1 240px;
+  }
+  .search-field input{
+    width:100%;
+    padding:11px 16px 11px 40px;
+    border-radius:999px;
+    border:1px solid var(--paper-line);
+    background:#fff;
+    font-size:14.5px;
+    color:var(--text-dark);
+  }
+  .search-field input::placeholder{color:var(--text-muted);}
+  .search-field svg{
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    width:16px;height:16px; color:var(--text-muted);
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:var(--paper-dim);
+    padding:4px;
+    border-radius:999px;
+  }
+  .tab{
+    border:none;
+    background:transparent;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--text-muted);
+    cursor:pointer;
+    transition:background .2s, color .2s;
+    white-space:nowrap;
+  }
+  .tab[aria-pressed="true"]{
+    background:var(--ink);
+    color:var(--text-on-ink);
+  }
+
+  /* ---------- Grid ---------- */
+  main{max-width:1080px; margin:0 auto; padding:36px 24px 80px;}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(228px, 1fr));
+    gap:26px;
+  }
+
+  .card{
+    background:#fffdf8;
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:visible;
+    position:relative;
+    transition:transform .25s ease;
+  }
+  .card.is-visited{
+    transform:rotate(-.6deg);
+  }
+
+  .card-photo{
+    aspect-ratio:4/3;
+    border-radius:var(--radius) var(--radius) 0 0;
+    overflow:hidden;
+    position:relative;
+    background:linear-gradient(135deg, var(--paper-dim), var(--paper));
+  }
+  .card-photo img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+    opacity:0;
+    filter:sepia(.35) saturate(1.15) contrast(1.05);
+    transition:opacity .6s ease;
+  }
+  .card-photo img.loaded{opacity:1;}
+  .fallback-icon{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--paper-line);
+  }
+  .fallback-icon svg{width:44px;height:44px;}
+  .card-photo img.loaded + .fallback-icon{display:none;}
+
+  .card-body{
+    padding:16px 16px 20px;
+  }
+  .card-name{
+    font-size:16.5px;
+    font-weight:600;
+    line-height:1.25;
+    margin-bottom:6px;
+  }
+  .card-country{
+    font-family:'Space Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+
+  /* Stamp button */
+  .stamp-btn{
+    position:absolute;
+    top:-16px; right:-14px;
+    width:58px; height:58px;
+    border-radius:50%;
+    border:2px dashed var(--gold);
+    background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transform:rotate(-9deg);
+    box-shadow:var(--shadow);
+    transition:border-color .25s, background .25s, transform .2s;
+    padding:0;
+  }
+  .stamp-btn:hover{transform:rotate(-9deg) scale(1.06);}
+  .stamp-btn .stamp-icon{
+    width:26px; height:26px;
+    color:var(--gold);
+    transition:color .2s;
+  }
+  .stamp-btn.is-visited{
+    border-style:solid;
+    border-color:var(--stamp-red);
+    box-shadow:0 0 0 3px var(--paper), 0 0 0 5px rgba(161,61,43,.55), var(--shadow);
+  }
+  .stamp-btn.is-visited .stamp-icon{color:var(--stamp-red);}
+  .stamp-btn.stamping .stamp-icon{animation:stampHit .38s ease-out;}
+  @keyframes stampHit{
+    0%{transform:scale(1.9) rotate(14deg); opacity:0;}
+    55%{transform:scale(.85) rotate(-6deg); opacity:1;}
+    100%{transform:scale(1) rotate(0deg); opacity:1;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .stamp-btn.stamping .stamp-icon{animation:none;}
+    .route-fill,.route-marker,.card{transition:none;}
+  }
+
+  .empty-state{
+    grid-column:1/-1;
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+  }
+  .empty-state h3{font-size:1.3rem; margin-bottom:8px; color:var(--text-dark);}
+  .empty-state button{
+    margin-top:16px;
+    border:1px solid var(--ink);
+    background:transparent;
+    padding:9px 18px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+
+  footer{
+    text-align:center;
+    padding:30px 24px 50px;
+    font-size:12.5px;
+    color:var(--text-muted);
+    line-height:1.7;
+  }
+
+  @media (max-width:560px){
+    .controls{padding:14px 16px;}
+    main{padding:28px 16px 60px;}
+    header{padding:44px 16px 32px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <span class="eyebrow"><span class="dot"></span>50 cudów &middot; Civilization VI</span>
+    <h1>Atlas Cudów Świata</h1>
+    <p class="subtitle">Cuda, które budowałeś w grze — odznacz stemplem te, które widziałeś już na własne oczy w prawdziwym świecie.</p>
+
+    <div class="progress-block">
+      <div class="progress-row">
+        <span>Wyprawa w toku</span>
+        <strong><span id="visitedCount">0</span> / <span id="totalCount">50</span> odwiedzonych</strong>
+      </div>
+      <div class="route">
+        <div class="route-fill" id="routeFill"></div>
+        <div class="route-marker" id="routeMarker">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#1b2430" stroke="#d8b26c" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#d8b26c"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="controls-wrap">
+  <div class="controls">
+    <div class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="Szukaj cudu lub kraju…" autocomplete="off">
+    </div>
+    <div class="tabs" role="tablist" aria-label="Filtruj cuda">
+      <button class="tab" data-filter="all" aria-pressed="true">Wszystkie</button>
+      <button class="tab" data-filter="visited" aria-pressed="false">Odwiedzone</button>
+      <button class="tab" data-filter="unvisited" aria-pressed="false">Do odwiedzenia</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  Lista 50 cudów opracowana na podstawie Civilization VI (edycja podstawowa + Rise&nbsp;and&nbsp;Fall + Gathering&nbsp;Storm + dodatki scenariuszowe).<br>
+  Zdjęcia pobierane na żywo z Wikipedii — jeśli dla któregoś cudu brakuje zdjęcia, pojawi się ikona zastępcza.<br>
+  Twój postęp zapisuje się lokalnie w przeglądarce (localStorage), na tym urządzeniu.
+</footer>
+
+<script>
+(function(){
+
+  const WONDERS = [
+    ["Alhambra","Spain","Alhambra"],
+    ["Amundsen-Scott Research Station","Antarctica (no sovereign country)","Amundsen–Scott South Pole Station"],
+    ["Angkor Wat","Cambodia","Angkor Wat"],
+    ["Big Ben","United Kingdom","Big Ben"],
+    ["Bolshoi Theatre","Russia","Bolshoi Theatre"],
+    ["Broadway","United States","Broadway theatre"],
+    ["Casa de Contratación","Spain","Casa de Contratación"],
+    ["Chichen Itza","Mexico","Chichen Itza"],
+    ["Colosseum","Italy","Colosseum"],
+    ["Cristo Redentor (Christ the Redeemer)","Brazil","Christ the Redeemer (statue)"],
+    ["Eiffel Tower","France","Eiffel Tower"],
+    ["Estadio do Maracana","Brazil","Maracanã Stadium"],
+    ["Etemenanki","Iraq","Etemenanki"],
+    ["Forbidden City","China","Forbidden City"],
+    ["Golden Gate Bridge","United States","Golden Gate Bridge"],
+    ["Great Bath","Pakistan","Great Bath (Mohenjo-daro)"],
+    ["Great Library","Egypt","Library of Alexandria"],
+    ["Great Lighthouse (Pharos of Alexandria)","Egypt","Lighthouse of Alexandria"],
+    ["Great Zimbabwe","Zimbabwe","Great Zimbabwe"],
+    ["Hagia Sophia","Turkey","Hagia Sophia"],
+    ["Hanging Gardens","Iraq","Hanging Gardens of Babylon"],
+    ["Hermitage","Russia","Winter Palace"],
+    ["Huey Teocalli","Mexico","Templo Mayor"],
+    ["Jebel Barkal","Sudan","Jebel Barkal"],
+    ["Kilwa Kisiwani","Tanzania","Kilwa Kisiwani"],
+    ["Kotoku-in (Great Buddha)","Japan","Kōtoku-in"],
+    ["Machu Picchu","Peru","Machu Picchu"],
+    ["Mahabodhi Temple","India","Mahabodhi Temple"],
+    ["Mausoleum at Halicarnassus","Turkey","Mausoleum at Halicarnassus"],
+    ["Meenakshi Temple","India","Meenakshi Amman Temple"],
+    ["Mont Saint-Michel","France","Mont-Saint-Michel"],
+    ["Oracle","Greece","Oracle of Delphi"],
+    ["Országház (Hungarian Parliament)","Hungary","Hungarian Parliament Building"],
+    ["Oxford University","United Kingdom","University of Oxford"],
+    ["Panama Canal","Panama","Panama Canal"],
+    ["Petra","Jordan","Petra"],
+    ["Potala Palace","China","Potala Palace"],
+    ["Pyramids (Great Pyramid of Giza)","Egypt","Great Pyramid of Giza"],
+    ["Ruhr Valley","Germany","Ruhr"],
+    ["St. Basil's Cathedral","Russia","Saint Basil's Cathedral"],
+    ["Statue of Liberty","United States","Statue of Liberty"],
+    ["Statue of Zeus","Greece","Statue of Zeus"],
+    ["Stonehenge","United Kingdom","Stonehenge"],
+    ["Sydney Opera House","Australia","Sydney Opera House"],
+    ["Taj Mahal","India","Taj Mahal"],
+    ["Temple of Artemis","Turkey","Temple of Artemis"],
+    ["Terracotta Army","China","Terracotta Army"],
+    ["Torre de Belem","Portugal","Belém Tower"],
+    ["University of Sankore","Mali","Sankore Madrasah"],
+    ["Venetian Arsenal","Italy","Venetian Arsenal"]
+  ].map(([name,country,wiki])=>({
+    id: slugify(name),
+    name, country, wiki
+  }));
+
+  function slugify(str){
+    return str.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-')
+      .replace(/(^-|-$)/g,'');
+  }
+
+  const VISITED_KEY = 'civ6-wonders-visited';
+  const IMG_CACHE_KEY = 'civ6-wonders-imgcache';
+
+  function loadVisited(){
+    try{ return new Set(JSON.parse(localStorage.getItem(VISITED_KEY)) || []); }
+    catch(e){ return new Set(); }
+  }
+  function saveVisited(set){
+    try{ localStorage.setItem(VISITED_KEY, JSON.stringify([...set])); }catch(e){}
+  }
+  function loadImgCache(){
+    try{ return JSON.parse(localStorage.getItem(IMG_CACHE_KEY)) || {}; }
+    catch(e){ return {}; }
+  }
+  function saveImgCache(cache){
+    try{ localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(cache)); }catch(e){}
+  }
+
+  let visited = loadVisited();
+  let imgCache = loadImgCache();
+  let activeFilter = 'all';
+  let query = '';
+
+  const grid = document.getElementById('grid');
+  const searchInput = document.getElementById('searchInput');
+  const tabs = document.querySelectorAll('.tab');
+  const visitedCountEl = document.getElementById('visitedCount');
+  const totalCountEl = document.getElementById('totalCount');
+  const routeFill = document.getElementById('routeFill');
+  const routeMarker = document.getElementById('routeMarker');
+
+  totalCountEl.textContent = WONDERS.length;
+
+  function updateProgress(){
+    const n = visited.size;
+    visitedCountEl.textContent = n;
+    const pct = Math.round((n / WONDERS.length) * 100);
+    routeFill.style.width = pct + '%';
+    routeMarker.style.left = pct + '%';
+  }
+
+  function matchesQuery(w){
+    if(!query) return true;
+    const q = query.toLowerCase();
+    return w.name.toLowerCase().includes(q) || w.country.toLowerCase().includes(q);
+  }
+  function matchesFilter(w){
+    if(activeFilter === 'visited') return visited.has(w.id);
+    if(activeFilter === 'unvisited') return !visited.has(w.id);
+    return true;
+  }
+
+  const cardEls = new Map();
+  let observer;
+
+  function buildCard(w){
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = w.id;
+
+    card.innerHTML = `
+      <div class="card-photo">
+        <img alt="${escapeHtml(w.name)}" loading="lazy">
+        <div class="fallback-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3v18M3 12h18M6.5 6.5l11 11M17.5 6.5l-11 11"/>
+          </svg>
+        </div>
+      </div>
+      <button class="stamp-btn" type="button" aria-pressed="false" aria-label="Oznacz ${escapeHtml(w.name)} jako odwiedzone">
+        <svg class="stamp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12.5l5 5L20 6"/>
+        </svg>
+      </button>
+      <div class="card-body">
+        <div class="card-name">${escapeHtml(w.name)}</div>
+        <div class="card-country mono">${escapeHtml(w.country)}</div>
+      </div>
+    `;
+
+    const stampBtn = card.querySelector('.stamp-btn');
+    stampBtn.addEventListener('click', ()=>toggleVisited(w.id, card, stampBtn));
+
+    applyVisitedState(w.id, card, stampBtn, false);
+
+    return card;
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function applyVisitedState(id, card, stampBtn, animate){
+    const isVisited = visited.has(id);
+    card.classList.toggle('is-visited', isVisited);
+    stampBtn.classList.toggle('is-visited', isVisited);
+    stampBtn.setAttribute('aria-pressed', String(isVisited));
+    if(animate){
+      stampBtn.classList.add('stamping');
+      setTimeout(()=>stampBtn.classList.remove('stamping'), 400);
+    }
+  }
+
+  function toggleVisited(id, card, stampBtn){
+    if(visited.has(id)) visited.delete(id); else visited.add(id);
+    saveVisited(visited);
+    applyVisitedState(id, card, stampBtn, true);
+    updateProgress();
+  }
+
+  async function loadImage(w, imgEl){
+    if(imgCache[w.id] !== undefined){
+      if(imgCache[w.id]){ imgEl.src = imgCache[w.id]; imgEl.onload = ()=>imgEl.classList.add('loaded'); }
+      return;
+    }
+    const url = await fetchWikiImage(w.wiki);
+    imgCache[w.id] = url || null;
+    saveImgCache(imgCache);
+    if(url){
+      imgEl.src = url;
+      imgEl.onload = ()=>imgEl.classList.add('loaded');
+    }
+  }
+
+  async function fetchWikiImage(title){
+    try{
+      const res = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title));
+      if(res.ok){
+        const data = await res.json();
+        if(data.thumbnail && data.thumbnail.source) return upsizeThumb(data.thumbnail.source);
+      }
+    }catch(e){}
+    try{
+      const res2 = await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&limit=1&format=json&origin=*&search=' + encodeURIComponent(title));
+      const data2 = await res2.json();
+      const found = data2 && data2[1] && data2[1][0];
+      if(found){
+        const res3 = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(found));
+        if(res3.ok){
+          const data3 = await res3.json();
+          if(data3.thumbnail && data3.thumbnail.source) return upsizeThumb(data3.thumbnail.source);
+        }
+      }
+    }catch(e){}
+    return null;
+  }
+
+  function upsizeThumb(url){
+    // Wikipedia thumbnail URLs contain a width segment like /320px-Name.jpg — bump it up a bit.
+    return url.replace(/\/(\d+)px-/, (m,p1)=>{
+      const w = Math.max(parseInt(p1,10), 480);
+      return '/' + w + 'px-';
+    });
+  }
+
+  function setupLazyLoad(){
+    if(observer) observer.disconnect();
+    observer = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          const id = entry.target.dataset.id;
+          const w = WONDERS.find(x=>x.id===id);
+          const imgEl = entry.target.querySelector('img');
+          loadImage(w, imgEl);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '200px 0px' });
+  }
+
+  function render(){
+    grid.innerHTML = '';
+    const filtered = WONDERS.filter(w=>matchesQuery(w) && matchesFilter(w));
+
+    if(filtered.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = `
+        <h3>Brak cudów pasujących do wyszukiwania</h3>
+        <p>Spróbuj innej frazy albo wyczyść filtry.</p>
+        <button type="button" id="clearFiltersBtn">Wyczyść filtry</button>
+      `;
+      grid.appendChild(empty);
+      document.getElementById('clearFiltersBtn').addEventListener('click', ()=>{
+        query = '';
+        searchInput.value = '';
+        setActiveFilter('all');
+      });
+      return;
+    }
+
+    setupLazyLoad();
+    filtered.forEach(w=>{
+      const card = buildCard(w);
+      grid.appendChild(card);
+      observer.observe(card);
+    });
+  }
+
+  function setActiveFilter(f){
+    activeFilter = f;
+    tabs.forEach(t=>t.setAttribute('aria-pressed', String(t.dataset.filter===f)));
+    render();
+  }
+
+  tabs.forEach(t=>t.addEventListener('click', ()=>setActiveFilter(t.dataset.filter)));
+
+  let searchDebounce;
+  searchInput.addEventListener('input', (e)=>{
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(()=>{
+      query = e.target.value.trim();
+      render();
+    }, 120);
+  });
+
+  updateProgress();
+  render();
+
+})();
+</script>
+
+</body>
+</html>
